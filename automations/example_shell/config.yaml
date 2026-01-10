@@ -1,0 +1,6 @@
+name: example_shell
+description: Example shell automation
+enabled: true
+# Uncomment to set a specific CRON schedule for this automation
+# cron_schedule: "0 */6 * * *"  # Every 6 hours
+script_type: shell

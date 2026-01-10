@@ -1,0 +1,32 @@
+{
+  "window.commandCenter": true,
+  "explorer.incrementalNaming": "smart",
+  "explorer.sortOrderReverse": false,
+  "python.analysis.extraPaths": ["${workspaceFolder}/src"],
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/",
+  "python.createEnvironment.trigger": "off",
+
+  // Editor Settings
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.venv": false,
+    "**/.DS_Store": true,
+    "**/.idea": true
+  },
+  "files.autoSave": "off",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.fontSize": 13,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports.ruff": "always"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  }
+}

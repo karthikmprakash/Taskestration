@@ -1,0 +1,14 @@
+# Global configuration for automation control panel
+# This file contains default settings for all automations
+
+# Global CRON schedule (used by automations that don't specify their own)
+# Format: minute hour day month weekday
+# Example: "0 9 * * *" runs daily at 9 AM
+# Leave empty or null to disable global scheduling
+cron_schedule: null
+
+# Enable/disable all automations globally
+enabled: true
+
+# Directory for storing automation logs (optional)
+# log_directory: "./logs"

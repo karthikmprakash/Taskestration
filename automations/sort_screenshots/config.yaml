@@ -1,0 +1,7 @@
+name: sort_screenshots
+description: Automatically sort screenshots from Desktop into date-organized folders
+enabled: true
+# Run every hour to check for new screenshots
+cron_schedule: "0 * * * *"
+script_type: python
+

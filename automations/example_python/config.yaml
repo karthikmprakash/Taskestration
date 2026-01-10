@@ -1,0 +1,6 @@
+name: example_python
+description: Example Python automation
+enabled: true
+# Uncomment to set a specific CRON schedule for this automation
+# cron_schedule: "0 9 * * *"  # Daily at 9 AM
+script_type: python
