@@ -1,6 +1,6 @@
 [project]
 name = "automations"
-version = "0.1.0"
+version = "0.1.1"
 description = "Automation control panel with CRON scheduling support"
 readme = "README.md"
 requires-python = ">=3.12"
