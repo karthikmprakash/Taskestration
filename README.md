@@ -270,6 +270,42 @@ Examples:
 - `"0 0 * * 0"` - Weekly on Sunday at midnight
 - `"*/30 * * * *"` - Every 30 minutes
 
+## Development
+
+### Setup
+
+```bash
+# Install development dependencies
+uv pip install -e ".[dev]"
+
+# Or use make
+make install-dev
+```
+
+### Code Quality
+
+```bash
+# Run all checks (recommended)
+./run_checks.sh
+
+# Or using make
+make check
+
+# Individual checks
+make format    # Format code
+make lint      # Check linting
+make type-check # Type checking
+
+# Or using uv directly
+uv run ruff format .
+uv run ruff check .
+uv run mypy src scripts
+```
+
+### Contributing
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines on contributing to this project.
+
 ## License
 
 MIT
