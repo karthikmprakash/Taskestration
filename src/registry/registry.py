@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from ..core.automation import Automation, AutomationConfig
+from ..core.automation import Automation, AutomationConfig, ScriptType
 
 
 class AutomationRegistry:
@@ -33,7 +33,7 @@ class AutomationRegistry:
         Returns:
             List of discovered Automation objects
         """
-        automations = []
+        automations: list[Automation] = []
 
         if not self.automations_dir.exists():
             return automations
@@ -71,12 +71,20 @@ class AutomationRegistry:
                 return None
 
             # Load base config
+            script_type_str = config_data.get("script_type")
+            script_type: ScriptType | None = None
+            if script_type_str:
+                try:
+                    script_type = ScriptType(script_type_str)
+                except ValueError:
+                    script_type = None
+
             config = AutomationConfig(
                 name=config_data.get("name", automation_dir.name),
                 description=config_data.get("description", ""),
                 cron_schedule=config_data.get("cron_schedule"),
                 enabled=config_data.get("enabled", True),
-                script_type=config_data.get("script_type"),
+                script_type=script_type,
                 working_directory=automation_dir,
             )
 
@@ -87,9 +95,9 @@ class AutomationRegistry:
                 if not config.script_type:
                     # Infer script type from extension
                     if script_path.suffix == ".py":
-                        config.script_type = "python"
+                        config.script_type = ScriptType.PYTHON
                     elif script_path.suffix in {".sh", ".bash", ".zsh"}:
-                        config.script_type = "shell"
+                        config.script_type = ScriptType.SHELL
 
             return Automation(path=automation_dir, config=config)
 
@@ -97,10 +105,10 @@ class AutomationRegistry:
             print(f"Error loading automation from {automation_dir}: {e}")
             return None
 
-    def _find_script(self, automation_dir: Path, script_type: str | None) -> Path | None:
+    def _find_script(self, automation_dir: Path, script_type: ScriptType | None) -> Path | None:
         """Find script file in automation directory."""
         if script_type:
-            patterns = self.SCRIPT_PATTERNS.get(script_type, [])
+            patterns = self.SCRIPT_PATTERNS.get(script_type.value, [])
         else:
             # Try all patterns
             patterns = []
@@ -150,8 +158,16 @@ class AutomationRegistry:
 
         config_path = automation_dir / self.CONFIG_FILE
 
+        # Convert script_type string to enum
+        script_type_enum: ScriptType | None = None
+        if script_type:
+            try:
+                script_type_enum = ScriptType(script_type)
+            except ValueError:
+                script_type_enum = None
+
         # Find script if exists
-        script_path = self._find_script(automation_dir, script_type)
+        script_path = self._find_script(automation_dir, script_type_enum)
 
         config_data = {
             "name": name,
@@ -180,6 +196,6 @@ class AutomationRegistry:
                 cron_schedule=cron_schedule,
                 working_directory=automation_dir,
                 script_path=script_path,
-                script_type=script_type,
+                script_type=script_type_enum,
             ),
         )

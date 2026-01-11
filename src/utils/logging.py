@@ -4,7 +4,6 @@ import functools
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import TypeVar
 
 from loguru import logger
 
@@ -39,10 +38,7 @@ def configure_logging(log_directory: Path | None = None) -> None:
         )
 
 
-F = TypeVar("F", bound=Callable[..., int])
-
-
-def log_automation(func: F) -> F:
+def log_automation[F: Callable[..., int]](func: F) -> F:
     """
     Decorator to automatically add logging to automation main functions.
 

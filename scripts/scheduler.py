@@ -53,12 +53,12 @@ class SchedulerDaemon:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
-    def _signal_handler(self, signum, frame):
+    def _signal_handler(self, signum, _frame):
         """Handle shutdown signals."""
         logger.info(f"Received signal {signum}, shutting down...")
         self.running = False
 
-    def _should_execute(self, automation_name: str, scheduled_time: datetime) -> bool:
+    def _should_execute(self, automation_name: str, _scheduled_time: datetime) -> bool:
         """
         Check if automation should execute (prevents duplicates).
 

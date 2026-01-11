@@ -166,7 +166,7 @@ def main():
                 print(f"  - {a.name}")
             return 1
 
-        result = scheduler.run_automation(automation, use_global_schedule=args.use_global)
+        result = scheduler.run_automation(automation)
         results[automation.name] = result
 
         if not args.json:
@@ -195,7 +195,7 @@ def main():
             for name, result in results.items():
                 print_result(name, result, args.verbose)
         else:
-            output = {
+            output_dict: dict[str, dict[str, object]] = {
                 name: {
                     "status": result.status.value,
                     "exit_code": result.exit_code,
@@ -205,7 +205,7 @@ def main():
                 }
                 for name, result in results.items()
             }
-            print(json.dumps(output, indent=2))
+            print(json.dumps(output_dict, indent=2))
 
     else:
         # List automations

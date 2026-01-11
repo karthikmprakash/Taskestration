@@ -48,7 +48,7 @@ class GlobalConfig:
         """Save global config to file."""
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        data = {
+        data: dict[str, bool | str] = {
             "enabled": self.enabled,
         }
 
@@ -123,14 +123,12 @@ class AutomationScheduler:
     def run_automation(
         self,
         automation: Automation,
-        use_global_schedule: bool = False,
     ) -> RunnerResult:
         """
         Execute an automation.
 
         Args:
             automation: Automation to execute
-            use_global_schedule: If True, use global schedule regardless of automation config
 
         Returns:
             RunnerResult with execution details
@@ -201,7 +199,7 @@ class AutomationScheduler:
         try:
             from_time = from_time or datetime.now()
             cron = croniter(schedule, from_time)
-            return cron.get_next(datetime)
+            return cron.get_next(datetime)  # type: ignore[no-any-return]
         except Exception:
             return None
 
@@ -288,9 +286,8 @@ class AutomationScheduler:
                 time_diff = abs((now - prev_time).total_seconds())
 
                 # Check if we're within the time window
-                if time_diff <= time_window:
-                    if self.should_run(automation, now):
-                        results[automation.name] = self.run_automation(automation)
+                if time_diff <= time_window and self.should_run(automation, now):
+                    results[automation.name] = self.run_automation(automation)
             except Exception:
                 # If CRON parsing fails, skip
                 continue
