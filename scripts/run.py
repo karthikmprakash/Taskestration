@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.registry import AutomationRegistry
 from src.runners import RunnerFactory
-from src.scheduler import AutomationScheduler, GlobalConfig
+from src.scheduler import AutomationScheduler, GlobalConfig, ScheduledExecution
 
 
 def print_result(automation_name: str, result, verbose: bool = False):
@@ -63,6 +63,16 @@ def main():
         help="Output results as JSON",
     )
     parser.add_argument(
+        "--schedule",
+        action="store_true",
+        help="List upcoming scheduled executions",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Limit number of upcoming executions to show (with --schedule)",
+    )
+    parser.add_argument(
         "--automations-dir",
         type=Path,
         default=Path(__file__).parent.parent / "automations",
@@ -92,6 +102,56 @@ def main():
     if not automations:
         print("No automations found.")
         return 1
+
+    # Handle schedule listing
+    if args.schedule:
+        from datetime import datetime
+
+        upcoming = scheduler.get_upcoming_executions(automations, limit=args.limit)
+
+        if not upcoming:
+            print("No scheduled executions found.")
+            print("Make sure automations have CRON schedules configured.")
+            return 0
+
+        if args.json:
+            output = [
+                {
+                    "automation": exec.automation.name,
+                    "next_run_time": exec.next_run_time.isoformat(),
+                    "cron_schedule": exec.cron_schedule,
+                    "is_using_global": exec.is_using_global,
+                }
+                for exec in upcoming
+            ]
+            print(json.dumps(output, indent=2))
+        else:
+            print("Upcoming scheduled executions:")
+            print()
+            now = datetime.now()
+            for exec in upcoming:
+                time_until = exec.next_run_time - now
+                hours = int(time_until.total_seconds() // 3600)
+                minutes = int((time_until.total_seconds() % 3600) // 60)
+                seconds = int(time_until.total_seconds() % 60)
+
+                if time_until.total_seconds() < 0:
+                    time_str = "OVERDUE"
+                elif hours > 0:
+                    time_str = f"in {hours}h {minutes}m"
+                elif minutes > 0:
+                    time_str = f"in {minutes}m {seconds}s"
+                else:
+                    time_str = f"in {seconds}s"
+
+                schedule_type = "global" if exec.is_using_global else "local"
+                print(
+                    f"  {exec.automation.name}: {exec.next_run_time.strftime('%Y-%m-%d %H:%M:%S')} "
+                    f"({time_str}) [{schedule_type}]"
+                )
+                print(f"    Schedule: {exec.cron_schedule}")
+
+        return 0
 
     results = {}
 

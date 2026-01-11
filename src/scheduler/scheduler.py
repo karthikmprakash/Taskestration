@@ -2,13 +2,17 @@
 
 import yaml
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+
+from croniter import croniter
 
 from ..core.automation import Automation
 from ..core.runner import RunnerResult, RunnerStatus
 from ..runners import RunnerFactory
 from ..utils.logging import configure_logging
+from .schedule_info import ScheduledExecution
 
 
 @dataclass
@@ -77,12 +81,13 @@ class AutomationScheduler:
         if global_config.log_directory:
             configure_logging(global_config.log_directory)
 
-    def should_run(self, automation: Automation) -> bool:
+    def should_run(self, automation: Automation, check_time: Optional[datetime] = None) -> bool:
         """
-        Check if automation should be run based on schedule.
+        Check if automation should be run based on schedule and time.
 
         Args:
             automation: Automation to check
+            check_time: Time to check against (defaults to now)
 
         Returns:
             True if automation should run
@@ -92,6 +97,27 @@ class AutomationScheduler:
 
         if not automation.enabled:
             return False
+
+        # Get effective schedule
+        schedule = self.get_effective_schedule(automation)
+        if not schedule:
+            # No schedule means manual execution only
+            return False
+
+        # If check_time is provided, verify if it matches the schedule
+        if check_time:
+            try:
+                cron = croniter(schedule, check_time)
+                # Get the previous scheduled time
+                prev_time = cron.get_prev(datetime)
+                # Check if we're within a small window of the scheduled time
+                time_diff = abs((check_time - prev_time).total_seconds())
+                # Allow 60 second window for execution
+                if time_diff > 60:
+                    return False
+            except Exception:
+                # If CRON parsing fails, allow execution
+                pass
 
         return True
 
@@ -155,6 +181,122 @@ class AutomationScheduler:
         if automation.config.uses_global_schedule():
             return self.global_config.cron_schedule
         return automation.config.cron_schedule
+
+    def get_next_run_time(
+        self, automation: Automation, from_time: Optional[datetime] = None
+    ) -> Optional[datetime]:
+        """
+        Calculate next run time for an automation.
+
+        Args:
+            automation: Automation to calculate next run for
+            from_time: Starting time (defaults to now)
+
+        Returns:
+            Next run time or None if no schedule
+        """
+        schedule = self.get_effective_schedule(automation)
+        if not schedule:
+            return None
+
+        try:
+            from_time = from_time or datetime.now()
+            cron = croniter(schedule, from_time)
+            return cron.get_next(datetime)
+        except Exception:
+            return None
+
+    def get_upcoming_executions(
+        self,
+        automations: list[Automation],
+        limit: Optional[int] = None,
+        from_time: Optional[datetime] = None,
+    ) -> List[ScheduledExecution]:
+        """
+        Get all upcoming scheduled executions.
+
+        Args:
+            automations: List of automations to check
+            limit: Maximum number of executions to return (None for all)
+            from_time: Starting time (defaults to now)
+
+        Returns:
+            List of ScheduledExecution objects, sorted by next run time
+        """
+        from_time = from_time or datetime.now()
+        upcoming = []
+
+        for automation in automations:
+            # Skip disabled automations
+            if not automation.enabled or not self.global_config.enabled:
+                continue
+
+            schedule = self.get_effective_schedule(automation)
+            if not schedule:
+                continue
+
+            next_run = self.get_next_run_time(automation, from_time)
+            if next_run:
+                is_global = automation.config.uses_global_schedule()
+                upcoming.append(
+                    ScheduledExecution(
+                        automation=automation,
+                        next_run_time=next_run,
+                        cron_schedule=schedule,
+                        is_using_global=is_global,
+                    )
+                )
+
+        # Sort by next run time
+        upcoming.sort()
+
+        # Apply limit if specified
+        if limit:
+            upcoming = upcoming[:limit]
+
+        return upcoming
+
+    def check_and_run_due(
+        self, automations: list[Automation], time_window: int = 60
+    ) -> dict[str, RunnerResult]:
+        """
+        Check for automations that are due and run them.
+
+        Args:
+            automations: List of automations to check
+            time_window: Time window in seconds to consider automations as due
+
+        Returns:
+            Dictionary mapping automation names to their results
+        """
+        results = {}
+        now = datetime.now()
+
+        for automation in automations:
+            # Skip disabled automations
+            if not automation.enabled or not self.global_config.enabled:
+                continue
+
+            # Get schedule
+            schedule = self.get_effective_schedule(automation)
+            if not schedule:
+                continue
+
+            # Check if it's time to run
+            try:
+                cron = croniter(schedule, now)
+                prev_time = cron.get_prev(datetime)
+                time_diff = abs((now - prev_time).total_seconds())
+
+                # Check if we're within the time window
+                if time_diff <= time_window:
+                    if self.should_run(automation, now):
+                        results[automation.name] = self.run_automation(automation)
+            except Exception:
+                # If CRON parsing fails, skip
+                continue
+
+        return results
 
     def run_all_enabled(self, automations: list[Automation]) -> dict[str, RunnerResult]:
         """

@@ -7,7 +7,7 @@ from typing import Optional
 
 from loguru import logger
 
-from core.runner import AutomationRunner, RunnerResult, RunnerStatus
+from ..core.runner import AutomationRunner, RunnerResult, RunnerStatus
 
 
 class PythonRunner(AutomationRunner):
