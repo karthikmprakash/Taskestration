@@ -2,8 +2,9 @@
 
 import functools
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from loguru import logger
 
@@ -44,13 +45,13 @@ F = TypeVar("F", bound=Callable[..., int])
 def log_automation(func: F) -> F:
     """
     Decorator to automatically add logging to automation main functions.
-    
+
     Logs:
     - Function entry with parameters
     - Execution time
     - Success/failure status
     - Errors and exceptions
-    
+
     Usage:
         @log_automation
         def main():
@@ -71,9 +72,7 @@ def log_automation(func: F) -> F:
             if result == 0:
                 logger.success(f"Automation '{func_name}' completed successfully")
             else:
-                logger.warning(
-                    f"Automation '{func_name}' completed with exit code {result}"
-                )
+                logger.warning(f"Automation '{func_name}' completed with exit code {result}")
 
             return result
 
@@ -91,4 +90,3 @@ def log_automation(func: F) -> F:
 def get_logger():
     """Get the configured logger instance."""
     return logger
-

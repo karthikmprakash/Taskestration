@@ -96,9 +96,7 @@ class SchedulerDaemon:
 
             for automation_name, result in results.items():
                 # Get the automation to check schedule
-                automation = next(
-                    (a for a in automations if a.name == automation_name), None
-                )
+                automation = next((a for a in automations if a.name == automation_name), None)
 
                 if not automation:
                     continue
@@ -114,9 +112,7 @@ class SchedulerDaemon:
                     if result.status.value == "success":
                         logger.info(f"✓ {automation_name}: executed successfully")
                     elif result.status.value == "failed":
-                        logger.error(
-                            f"✗ {automation_name}: execution failed - {result.error}"
-                        )
+                        logger.error(f"✗ {automation_name}: execution failed - {result.error}")
                     else:
                         logger.debug(f"⊘ {automation_name}: {result.status.value}")
 
@@ -219,4 +215,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

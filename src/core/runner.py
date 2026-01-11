@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 
 class RunnerStatus(Enum):
@@ -50,8 +49,8 @@ class AutomationRunner(ABC):
     def run(
         self,
         script_path: Path,
-        working_directory: Optional[Path] = None,
-        env_vars: Optional[dict[str, str]] = None,
+        working_directory: Path | None = None,
+        env_vars: dict[str, str] | None = None,
     ) -> RunnerResult:
         """
         Execute the automation script.

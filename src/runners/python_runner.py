@@ -3,7 +3,6 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
 
 from loguru import logger
 
@@ -15,15 +14,13 @@ class PythonRunner(AutomationRunner):
 
     def can_run(self, script_path: Path) -> bool:
         """Check if this is a Python script."""
-        return script_path.suffix.lower() == ".py" or script_path.name.startswith(
-            "run.py"
-        )
+        return script_path.suffix.lower() == ".py" or script_path.name.startswith("run.py")
 
     def run(
         self,
         script_path: Path,
-        working_directory: Optional[Path] = None,
-        env_vars: Optional[dict[str, str]] = None,
+        working_directory: Path | None = None,
+        env_vars: dict[str, str] | None = None,
     ) -> RunnerResult:
         """Execute Python script."""
         start_time = time.time()
@@ -41,7 +38,7 @@ class PythonRunner(AutomationRunner):
         import os
 
         env = os.environ.copy()
-        
+
         # Add project root to PYTHONPATH so scripts can import from src.utils
         # Project root is the parent of the src directory
         project_root = Path(__file__).parent.parent.parent
@@ -50,7 +47,7 @@ class PythonRunner(AutomationRunner):
             env["PYTHONPATH"] = f"{project_root}{os.pathsep}{pythonpath}"
         else:
             env["PYTHONPATH"] = str(project_root)
-        
+
         if env_vars:
             env.update(env_vars)
 
@@ -71,9 +68,7 @@ class PythonRunner(AutomationRunner):
             execution_time = time.time() - start_time
 
             if result.returncode == 0:
-                logger.success(
-                    f"Script completed successfully in {execution_time:.2f}s"
-                )
+                logger.success(f"Script completed successfully in {execution_time:.2f}s")
                 if result.stdout:
                     logger.debug(f"Script output:\n{result.stdout}")
                 return RunnerResult(

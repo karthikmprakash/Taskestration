@@ -2,7 +2,6 @@
 """Register a new automation."""
 
 import argparse
-import sys
 from pathlib import Path
 
 from src.registry import AutomationRegistry
@@ -58,12 +57,10 @@ def main():
     if automation.config.script_path:
         print(f"✓ Found script: {automation.config.script_path}")
     else:
-        print(
-            "⚠ No script found. Please add run.py or run.sh to the automation directory."
-        )
+        print("⚠ No script found. Please add run.py or run.sh to the automation directory.")
 
-    print(f"✓ Automation registered successfully!")
-    print(f"\nTo enable/disable or modify schedule, edit:")
+    print("✓ Automation registered successfully!")
+    print("\nTo enable/disable or modify schedule, edit:")
     print(f"  {automation_dir / 'config.yaml'}")
 
 

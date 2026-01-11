@@ -1,7 +1,6 @@
 """Factory for creating appropriate automation runners."""
 
 from pathlib import Path
-from typing import Optional
 
 from ..core.runner import AutomationRunner
 from .python_runner import PythonRunner
@@ -18,7 +17,7 @@ class RunnerFactory:
             ShellRunner(),
         ]
 
-    def get_runner(self, script_path: Path) -> Optional[AutomationRunner]:
+    def get_runner(self, script_path: Path) -> AutomationRunner | None:
         """
         Get appropriate runner for the given script path.
 

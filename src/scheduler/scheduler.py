@@ -1,11 +1,10 @@
 """CRON scheduler for managing automation execution."""
 
-import yaml
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
 
+import yaml
 from croniter import croniter
 
 from ..core.automation import Automation
@@ -19,9 +18,9 @@ from .schedule_info import ScheduledExecution
 class GlobalConfig:
     """Global configuration for automation control panel."""
 
-    cron_schedule: Optional[str] = None
+    cron_schedule: str | None = None
     enabled: bool = True
-    log_directory: Optional[Path] = None
+    log_directory: Path | None = None
 
     @classmethod
     def load(cls, config_path: Path) -> "GlobalConfig":
@@ -30,7 +29,7 @@ class GlobalConfig:
             return cls()
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 data = yaml.safe_load(f) or {}
 
             log_dir = None
@@ -76,12 +75,12 @@ class AutomationScheduler:
         """
         self.global_config = global_config
         self.runner_factory = runner_factory
-        
+
         # Configure logging if log directory is specified
         if global_config.log_directory:
             configure_logging(global_config.log_directory)
 
-    def should_run(self, automation: Automation, check_time: Optional[datetime] = None) -> bool:
+    def should_run(self, automation: Automation, check_time: datetime | None = None) -> bool:
         """
         Check if automation should be run based on schedule and time.
 
@@ -168,7 +167,7 @@ class AutomationScheduler:
 
         return result
 
-    def get_effective_schedule(self, automation: Automation) -> Optional[str]:
+    def get_effective_schedule(self, automation: Automation) -> str | None:
         """
         Get effective CRON schedule for automation.
 
@@ -183,8 +182,8 @@ class AutomationScheduler:
         return automation.config.cron_schedule
 
     def get_next_run_time(
-        self, automation: Automation, from_time: Optional[datetime] = None
-    ) -> Optional[datetime]:
+        self, automation: Automation, from_time: datetime | None = None
+    ) -> datetime | None:
         """
         Calculate next run time for an automation.
 
@@ -209,9 +208,9 @@ class AutomationScheduler:
     def get_upcoming_executions(
         self,
         automations: list[Automation],
-        limit: Optional[int] = None,
-        from_time: Optional[datetime] = None,
-    ) -> List[ScheduledExecution]:
+        limit: int | None = None,
+        from_time: datetime | None = None,
+    ) -> list[ScheduledExecution]:
         """
         Get all upcoming scheduled executions.
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.registry import AutomationRegistry
 from src.runners import RunnerFactory
-from src.scheduler import AutomationScheduler, GlobalConfig, ScheduledExecution
+from src.scheduler import AutomationScheduler, GlobalConfig
 
 
 def print_result(automation_name: str, result, verbose: bool = False):
@@ -157,20 +157,16 @@ def main():
 
     if args.automation:
         # Run specific automation
-        automation = next(
-            (a for a in automations if a.name == args.automation), None
-        )
+        automation = next((a for a in automations if a.name == args.automation), None)
 
         if not automation:
             print(f"Automation '{args.automation}' not found.")
-            print(f"\nAvailable automations:")
+            print("\nAvailable automations:")
             for a in automations:
                 print(f"  - {a.name}")
             return 1
 
-        result = scheduler.run_automation(
-            automation, use_global_schedule=args.use_global
-        )
+        result = scheduler.run_automation(automation, use_global_schedule=args.use_global)
         results[automation.name] = result
 
         if not args.json:

@@ -1,8 +1,8 @@
 """Automation registry for managing registered automations."""
 
-import yaml
 from pathlib import Path
-from typing import Optional
+
+import yaml
 
 from ..core.automation import Automation, AutomationConfig
 
@@ -48,7 +48,7 @@ class AutomationRegistry:
 
         return automations
 
-    def load_automation(self, automation_dir: Path) -> Optional[Automation]:
+    def load_automation(self, automation_dir: Path) -> Automation | None:
         """
         Load automation from directory.
 
@@ -64,7 +64,7 @@ class AutomationRegistry:
             return None
 
         try:
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config_data = yaml.safe_load(f)
 
             if not config_data:
@@ -97,7 +97,7 @@ class AutomationRegistry:
             print(f"Error loading automation from {automation_dir}: {e}")
             return None
 
-    def _find_script(self, automation_dir: Path, script_type: Optional[str]) -> Optional[Path]:
+    def _find_script(self, automation_dir: Path, script_type: str | None) -> Path | None:
         """Find script file in automation directory."""
         if script_type:
             patterns = self.SCRIPT_PATTERNS.get(script_type, [])
@@ -129,8 +129,8 @@ class AutomationRegistry:
         automation_dir: Path,
         name: str,
         description: str = "",
-        cron_schedule: Optional[str] = None,
-        script_type: Optional[str] = None,
+        cron_schedule: str | None = None,
+        script_type: str | None = None,
     ) -> Automation:
         """
         Register a new automation.

@@ -3,7 +3,6 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
 
 from loguru import logger
 
@@ -16,16 +15,15 @@ class ShellRunner(AutomationRunner):
     def can_run(self, script_path: Path) -> bool:
         """Check if this is a shell script."""
         shell_extensions = {".sh", ".bash", ".zsh"}
-        return (
-            script_path.suffix.lower() in shell_extensions
-            or script_path.name.startswith("run.sh")
+        return script_path.suffix.lower() in shell_extensions or script_path.name.startswith(
+            "run.sh"
         )
 
     def run(
         self,
         script_path: Path,
-        working_directory: Optional[Path] = None,
-        env_vars: Optional[dict[str, str]] = None,
+        working_directory: Path | None = None,
+        env_vars: dict[str, str] | None = None,
     ) -> RunnerResult:
         """Execute shell script."""
         start_time = time.time()
@@ -79,9 +77,7 @@ class ShellRunner(AutomationRunner):
             execution_time = time.time() - start_time
 
             if result.returncode == 0:
-                logger.success(
-                    f"Script completed successfully in {execution_time:.2f}s"
-                )
+                logger.success(f"Script completed successfully in {execution_time:.2f}s")
                 if result.stdout:
                     logger.debug(f"Script output:\n{result.stdout}")
                 return RunnerResult(
