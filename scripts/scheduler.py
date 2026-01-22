@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """Scheduler daemon for automatic automation execution."""
 
-import argparse
 import signal
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
+import click
 from loguru import logger
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
+from src.cli import CLITheme, print_error, print_info, print_success, print_warning
 from src.registry import AutomationRegistry
 from src.runners import RunnerFactory
 from src.scheduler import AutomationScheduler, GlobalConfig
+
+console = Console()
 
 
 class SchedulerDaemon:
@@ -55,6 +61,8 @@ class SchedulerDaemon:
 
     def _signal_handler(self, signum, _frame):
         """Handle shutdown signals."""
+        console.print()
+        print_info(f"Received signal {signum}, shutting down...")
         logger.info(f"Received signal {signum}, shutting down...")
         self.running = False
 
@@ -121,6 +129,25 @@ class SchedulerDaemon:
 
     def run(self):
         """Run the scheduler daemon."""
+        console.print()
+        console.print(
+            Panel(
+                f"[bold {CLITheme.ACCENT}]Automation Scheduler Daemon[/bold {CLITheme.ACCENT}]",
+                border_style=CLITheme.ACCENT,
+                padding=(1, 2),
+            )
+        )
+        console.print()
+
+        info_table = Table(show_header=False, box=None, padding=(0, 1))
+        info_table.add_column(style=CLITheme.MUTED, width=20)
+        info_table.add_column(style=CLITheme.HIGHLIGHT)
+        info_table.add_row("Status:", f"[{CLITheme.SUCCESS}]Starting...[/{CLITheme.SUCCESS}]")
+        info_table.add_row("Check interval:", f"{self.check_interval} seconds")
+        info_table.add_row("Automations dir:", str(self.automations_dir))
+        console.print(info_table)
+        console.print()
+
         logger.info("Starting scheduler daemon...")
         logger.info(f"Checking interval: {self.check_interval} seconds")
         logger.info(f"Automations directory: {self.automations_dir}")
@@ -137,75 +164,92 @@ class SchedulerDaemon:
                 if self.running:  # Check again after sleep
                     self._check_and_run()
             except KeyboardInterrupt:
+                console.print()
+                print_info("Received keyboard interrupt, shutting down...")
                 logger.info("Received keyboard interrupt, shutting down...")
                 break
             except Exception as e:
+                print_error(f"Error in scheduler loop: {e}")
                 logger.error(f"Error in scheduler loop: {e}")
                 # Continue running even if there's an error
                 time.sleep(self.check_interval)
 
+        console.print()
+        print_info("Scheduler daemon stopped.")
         logger.info("Scheduler daemon stopped.")
 
     def run_once(self):
         """Run once (for testing)."""
+        console.print()
+        console.print(
+            Panel(
+                f"[bold {CLITheme.ACCENT}]Running Scheduler Once[/bold {CLITheme.ACCENT}]",
+                border_style=CLITheme.ACCENT,
+                padding=(1, 2),
+            )
+        )
+        console.print()
         logger.info("Running scheduler once...")
         self._check_and_run()
+        console.print()
+        print_success("Check complete.")
         logger.info("Check complete.")
 
 
-def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Scheduler daemon for automatic automation execution"
-    )
-    parser.add_argument(
-        "--check-interval",
-        type=int,
-        default=60,
-        help="Interval in seconds to check for due automations (default: 60)",
-    )
-    parser.add_argument(
-        "--once",
-        action="store_true",
-        help="Run once and exit (for testing)",
-    )
-    parser.add_argument(
-        "--automations-dir",
-        type=Path,
-        default=Path(__file__).parent.parent / "automations",
-        help="Directory containing automations (default: ./automations)",
-    )
-    parser.add_argument(
-        "--config-dir",
-        type=Path,
-        default=Path(__file__).parent.parent / "config",
-        help="Directory containing global config (default: ./config)",
-    )
-    parser.add_argument(
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
-        help="Log level (default: INFO)",
-    )
-
-    args = parser.parse_args()
-
+@click.command()
+@click.option(
+    "--check-interval",
+    type=int,
+    default=60,
+    help="Interval in seconds to check for due automations",
+    show_default=True,
+)
+@click.option("--once", is_flag=True, help="Run once and exit (for testing)")
+@click.option(
+    "--automations-dir",
+    type=click.Path(path_type=Path),
+    default=Path(__file__).parent.parent / "automations",
+    help="Directory containing automations",
+    show_default=True,
+)
+@click.option(
+    "--config-dir",
+    type=click.Path(path_type=Path),
+    default=Path(__file__).parent.parent / "config",
+    help="Directory containing global config",
+    show_default=True,
+)
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
+    default="INFO",
+    help="Log level",
+    show_default=True,
+)
+def main(
+    check_interval: int,
+    once: bool,
+    automations_dir: Path,
+    config_dir: Path,
+    log_level: str,
+):
+    """Scheduler daemon for automatic automation execution."""
     # Configure logging
     logger.remove()  # Remove default handler
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>",
-        level=args.log_level,
+        level=log_level,
     )
 
     # Create and run daemon
     daemon = SchedulerDaemon(
-        automations_dir=args.automations_dir,
-        config_dir=args.config_dir,
-        check_interval=args.check_interval,
+        automations_dir=automations_dir,
+        config_dir=config_dir,
+        check_interval=check_interval,
     )
 
-    if args.once:
+    if once:
         daemon.run_once()
     else:
         daemon.run()
