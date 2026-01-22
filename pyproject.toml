@@ -4,7 +4,13 @@ version = "0.1.1"
 description = "Automation control panel with CRON scheduling support"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["pyyaml>=6.0", "loguru>=0.7.0", "croniter>=2.0.0"]
+dependencies = [
+    "pyyaml>=6.0",
+    "loguru>=0.7.0",
+    "croniter>=2.0.0",
+    "rich>=13.7.0",
+    "click>=8.1.7",
+]
 
 [project.optional-dependencies]
 dev = ["ruff>=0.1.0", "mypy>=1.7.0", "types-pyyaml>=6.0.0"]
@@ -13,6 +19,7 @@ dev = ["ruff>=0.1.0", "mypy>=1.7.0", "types-pyyaml>=6.0.0"]
 automation-register = "scripts.register:main"
 automation-run = "scripts.run:main"
 automation-scheduler = "scripts.scheduler:main"
+automation = "scripts.interactive:main"
 
 [build-system]
 requires = ["hatchling"]
